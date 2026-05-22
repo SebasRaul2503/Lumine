@@ -95,9 +95,24 @@ crosses the boundary.
 
 ## Cache strategy
 
-There is no cache yet — each open decodes from disk. Phase 3 introduces an
-LRU cache of decoded images keyed by file path, with a configurable byte
-budget, plus look-ahead preloading of the next and previous images.
+`core::ImageCache` is a least-recently-used cache of decoded `QImage`s,
+keyed by absolute path and bounded by a **byte budget** (256 MB by default).
+Inserting an entry past the budget evicts the least-recently-used entries
+until it fits; an image larger than the whole budget is never stored.
+`get()` refreshes recency. It is pure logic — no threading, no I/O — and is
+driven only from the UI thread.
+
+**Preloading.** Whenever the current image changes, `MainWindow` asks
+`AsyncImageLoader` to speculatively decode the next and previous images via
+low-priority `requestPreload` calls. Their results land in the cache, so
+stepping to a neighbour is usually an instant cache hit with no decode and
+no flicker. Opening a new directory clears the cache, since the previous
+neighbourhood will not be revisited.
+
+**Thumbnails** follow the same async pattern: `ThumbnailLoader` decodes
+down-scaled previews on a thread pool (using `QImageReader::setScaledSize`
+to avoid a full-resolution decode), and `ThumbnailStrip` fills them in as
+they arrive.
 
 ## Memory and performance notes
 

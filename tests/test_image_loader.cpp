@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QFile>
 #include <QImage>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QTemporaryDir>
@@ -119,4 +120,32 @@ TEST_CASE("ImageLoader recognises supported and unsupported suffixes", "[loader]
     CHECK(ImageLoader::isSupported(QStringLiteral("UPPER.PNG")));
     CHECK_FALSE(ImageLoader::isSupported(QStringLiteral("archive.tar.gz")));
     CHECK_FALSE(ImageLoader::isSupported(QStringLiteral("noextension")));
+}
+
+TEST_CASE("ImageLoader::loadThumbnail produces a bounded thumbnail",
+          "[loader][thumbnail]")
+{
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    QImage source(400, 300, QImage::Format_RGB32);
+    source.fill(Qt::blue);
+    const QString path = QDir(tmp.path()).filePath(QStringLiteral("big.png"));
+    REQUIRE(source.save(path, "PNG"));
+
+    const QImage thumb = ImageLoader::loadThumbnail(path, QSize(100, 100));
+
+    REQUIRE_FALSE(thumb.isNull());
+    CHECK(thumb.width() <= 100);
+    CHECK(thumb.height() <= 100);
+    // The 4:3 aspect ratio is preserved: 400x300 fits 100x100 as 100x75.
+    CHECK(thumb.width() == 100);
+    CHECK(thumb.height() == 75);
+}
+
+TEST_CASE("ImageLoader::loadThumbnail returns null for a missing file",
+          "[loader][thumbnail][error]")
+{
+    const QImage thumb = ImageLoader::loadThumbnail(
+        QStringLiteral("/no/such/lumine-thumbnail.png"), QSize(64, 64));
+    CHECK(thumb.isNull());
 }

@@ -17,11 +17,13 @@ Available now:
 - Wheel zoom (fit / 100% / free), cursor-anchored, with drag-to-pan
 - Folder navigation — arrow keys step through the opened file's directory
 - Asynchronous decoding off the UI thread, with stale-result cancellation
+- LRU decoded-image cache with speculative next/previous preloading
+- Thumbnail sidebar for click-to-jump navigation
 - Fullscreen mode and a keyboard-first control scheme
 - Dark, minimal interface
 
-Planned: a thumbnail sidebar, a decoded-image cache with neighbour
-preloading, transitions, EXIF metadata, slideshow mode, and a GPU viewport.
+Planned: open/navigation transitions, EXIF metadata, slideshow mode,
+recent files, and a GPU-backed viewport.
 
 ## Quick start
 
@@ -48,6 +50,7 @@ Full instructions are in [`docs/build.md`](docs/build.md).
 | `+` / `-` / wheel | Zoom in / out                   |
 | `0` / `1`         | Zoom to fit / actual size       |
 | Double-click      | Toggle fit and 1:1              |
+| `T`               | Toggle the thumbnail strip      |
 | `F` / `F11`       | Toggle fullscreen               |
 | `Esc`             | Exit fullscreen, or quit        |
 | `Ctrl+Q`          | Quit                            |

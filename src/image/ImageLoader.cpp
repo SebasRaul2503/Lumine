@@ -60,4 +60,32 @@ bool ImageLoader::isSupported(const QString& path)
     return supportedSuffixes().contains(suffix);
 }
 
+QImage ImageLoader::loadThumbnail(const QString& path, const QSize& maxSize)
+{
+    QImageReader reader(path);
+    reader.setAutoTransform(true);
+    if (!reader.canRead()) {
+        return {};
+    }
+
+    // When the format reports its size up front, ask the decoder to produce
+    // the reduced resolution directly — far cheaper than a full decode.
+    const QSize original = reader.size();
+    if (original.isValid() && !original.isEmpty()) {
+        reader.setScaledSize(original.scaled(maxSize, Qt::KeepAspectRatio));
+    }
+
+    QImage thumbnail = reader.read();
+    if (thumbnail.isNull()) {
+        return {};
+    }
+
+    // Guarantee the result fits maxSize even when the format hid its size.
+    if (thumbnail.width() > maxSize.width() || thumbnail.height() > maxSize.height()) {
+        thumbnail =
+            thumbnail.scaled(maxSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    }
+    return thumbnail;
+}
+
 } // namespace lumine::image

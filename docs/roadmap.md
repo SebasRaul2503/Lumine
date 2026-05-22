@@ -27,10 +27,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 
 ## Phase 3 — Caching & preloading
 
-- [ ] LRU decoded-image cache with a byte budget
-- [ ] Preload the next and previous images
-- [ ] Thumbnail sidebar
-- [ ] Cache eviction tests
+- [x] LRU decoded-image cache with a byte budget
+- [x] Preload the next and previous images
+- [x] Thumbnail sidebar
+- [x] Cache eviction tests
 
 ## Phase 4 — Experience
 
@@ -52,3 +52,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 | --------- | ---------------------------------------------------- |
 | 1         | Project bootstrap, window, basic image display       |
 | 2         | Zoom/pan, folder navigation, async decoding           |
+| 3         | LRU cache, neighbour preloading, thumbnail strip      |

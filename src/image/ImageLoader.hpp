@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QImage>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 
@@ -40,6 +41,12 @@ public:
 
     // True when `path` carries a suffix Qt advertises decoding support for.
     [[nodiscard]] static bool isSupported(const QString& path);
+
+    // Decodes a down-scaled thumbnail of `path` that fits within `maxSize`
+    // while preserving aspect ratio. Decodes directly at the reduced size
+    // when the format reports its dimensions up front, avoiding a full-size
+    // decode. Returns a null QImage on any failure.
+    [[nodiscard]] static QImage loadThumbnail(const QString& path, const QSize& maxSize);
 };
 
 } // namespace lumine::image

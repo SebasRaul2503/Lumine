@@ -20,6 +20,8 @@ configure_file(
 # lumine_lib — application logic, UI, rendering and platform code.
 # ---------------------------------------------------------------------------
 add_library(lumine_lib STATIC
+    core/ImageCache.cpp
+    core/ImageCache.hpp
     core/Logging.cpp
     core/Logging.hpp
     image/AsyncImageLoader.cpp
@@ -28,13 +30,17 @@ add_library(lumine_lib STATIC
     image/ImageList.hpp
     image/ImageLoader.cpp
     image/ImageLoader.hpp
+    image/ThumbnailLoader.cpp
+    image/ThumbnailLoader.hpp
     platform/PlatformInfo.cpp
     platform/PlatformInfo.hpp
     rendering/ImageView.cpp
     rendering/ImageView.hpp
     rendering/ZoomMath.hpp
     ui/MainWindow.cpp
-    ui/MainWindow.hpp)
+    ui/MainWindow.hpp
+    ui/ThumbnailStrip.cpp
+    ui/ThumbnailStrip.hpp)
 
 # Qt classes deriving from QObject need the meta-object compiler.
 set_target_properties(lumine_lib PROPERTIES AUTOMOC ON)
