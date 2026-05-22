@@ -5,8 +5,10 @@ built with **C++20** and **Qt 6**. Lumine targets Hyprland and other Wayland
 desktops, with an emphasis on instant startup, low memory use, and a quiet,
 keyboard-driven interface.
 
-> **Status — early development.** Iteration 1 (project bootstrap) is complete.
-> See [`docs/roadmap.md`](docs/roadmap.md) for what is planned next.
+> **Status — v0.1.0.** All five planned development phases are complete.
+> Lumine builds cleanly (C++20, warnings-as-errors) and runs natively on
+> Wayland / Hyprland with a GPU-backed viewport. The test suite has 45 cases
+> (165 assertions). See [`docs/roadmap.md`](docs/roadmap.md) for what's next.
 
 ## Features
 
@@ -39,9 +41,16 @@ sudo pacman -S --needed base-devel cmake qt6-base qt6-wayland catch2 clang
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
-# 3. Run
+# 3. Run from the build tree …
 ./build/src/lumine path/to/image.png
+
+# … or install it system-wide (also registers it with your app launcher)
+sudo cmake --install build
 ```
+
+> Running the **uninstalled** binary logs a harmless `org.freedesktop.portal`
+> warning about an unknown app ID — installing the desktop entry (the last
+> step above) resolves it. It does not affect functionality.
 
 Full instructions are in [`docs/build.md`](docs/build.md).
 
@@ -67,7 +76,8 @@ Full instructions are in [`docs/build.md`](docs/build.md).
 - [Architecture](docs/architecture.md) — modules, threading, rendering pipeline
 - [Build guide](docs/build.md) — dependencies and build options
 - [Testing](docs/testing.md) — running and writing tests
-- [Roadmap](docs/roadmap.md) — phased feature plan
+- [Packaging](docs/packaging.md) — install, PKGBUILD, CPack tarballs
+- [Roadmap](docs/roadmap.md) — phased feature plan and history
 
 ## Project layout
 
@@ -83,6 +93,7 @@ tests/         Catch2 test suite
 docs/          Architecture and developer documentation
 cmake/         Reusable CMake modules
 assets/        Desktop entry and icons
+packaging/     Arch Linux PKGBUILD
 scripts/       Developer tooling
 ```
 
