@@ -22,12 +22,17 @@ configure_file(
 add_library(lumine_lib STATIC
     core/Logging.cpp
     core/Logging.hpp
+    image/AsyncImageLoader.cpp
+    image/AsyncImageLoader.hpp
+    image/ImageList.cpp
+    image/ImageList.hpp
     image/ImageLoader.cpp
     image/ImageLoader.hpp
     platform/PlatformInfo.cpp
     platform/PlatformInfo.hpp
     rendering/ImageView.cpp
     rendering/ImageView.hpp
+    rendering/ZoomMath.hpp
     ui/MainWindow.cpp
     ui/MainWindow.hpp)
 

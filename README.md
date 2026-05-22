@@ -10,16 +10,18 @@ keyboard-driven interface.
 
 ## Features
 
-Available now (Iteration 1):
+Available now:
 
 - Native Wayland window with HiDPI / fractional-scaling support
 - Open an image from the command line or a file dialog
-- Fit-to-window display that re-scales smoothly on resize
+- Wheel zoom (fit / 100% / free), cursor-anchored, with drag-to-pan
+- Folder navigation — arrow keys step through the opened file's directory
+- Asynchronous decoding off the UI thread, with stale-result cancellation
 - Fullscreen mode and a keyboard-first control scheme
 - Dark, minimal interface
 
-Planned: interactive zoom & pan, folder navigation, asynchronous preloading,
-a thumbnail sidebar, EXIF metadata, slideshow mode, and GPU texture caching.
+Planned: a thumbnail sidebar, a decoded-image cache with neighbour
+preloading, transitions, EXIF metadata, slideshow mode, and a GPU viewport.
 
 ## Quick start
 
@@ -39,12 +41,16 @@ Full instructions are in [`docs/build.md`](docs/build.md).
 
 ## Keyboard shortcuts
 
-| Shortcut    | Action                          |
-| ----------- | ------------------------------- |
-| `Ctrl+O`    | Open an image                   |
-| `F` / `F11` | Toggle fullscreen               |
-| `Esc`       | Exit fullscreen, or quit        |
-| `Ctrl+Q`    | Quit                            |
+| Shortcut          | Action                          |
+| ----------------- | ------------------------------- |
+| `Ctrl+O`          | Open an image                   |
+| `←` / `→` / `Space` | Previous / next image         |
+| `+` / `-` / wheel | Zoom in / out                   |
+| `0` / `1`         | Zoom to fit / actual size       |
+| Double-click      | Toggle fit and 1:1              |
+| `F` / `F11`       | Toggle fullscreen               |
+| `Esc`             | Exit fullscreen, or quit        |
+| `Ctrl+Q`          | Quit                            |
 
 ## Documentation
 

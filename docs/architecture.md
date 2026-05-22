@@ -76,21 +76,22 @@ machine (fit / 100% / free zoom) layered on top.
 
 ## Threading model
 
-**Iteration 1 is single-threaded.** Image decoding happens synchronously on
-the UI thread inside `ImageLoader::load`. This is acceptable while the only
-trigger is an explicit user action (CLI argument or file dialog) and there is
-no neighbour preloading.
+Decoding runs off the UI thread. `ImageLoader::load` itself stays
+synchronous and stateless; `AsyncImageLoader` wraps it for concurrency:
 
-Phase 2 moves decoding onto a worker via `QThreadPool` / `QtConcurrent`:
+- `AsyncImageLoader::request` returns immediately. The UI thread never
+  blocks on I/O or decoding.
+- A small `QThreadPool` (two threads) runs `ImageLoader::load` on a worker.
+- The worker hands its `QImage` back through a queued `QMetaObject::invokeMethod`
+  call. `QImage` is implicitly shared, so the handoff copies no pixels.
+- Each request carries a monotonic **generation token**. When a newer
+  request arrives the token advances, and the delivery slot drops any result
+  whose token is stale — so rapid navigation never flashes a superseded
+  image. This is cooperative cancellation: a decode already running is not
+  interrupted, only its result is discarded.
 
-- The UI thread requests a decode and continues immediately.
-- The worker produces a `QImage` and hands ownership back through a queued
-  signal — `QImage` is implicitly shared, so the handoff copies no pixels.
-- In-flight decodes for images the user has navigated away from are
-  cancelled.
-
-`ImageLoader` is already stateless and free of UI types specifically so it
-can be called from a worker thread unchanged.
+Everything that touches widgets stays on the UI thread; only pure decoding
+crosses the boundary.
 
 ## Cache strategy
 

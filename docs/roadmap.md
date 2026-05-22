@@ -15,15 +15,15 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 - [x] Fullscreen support
 - [x] Wayland-friendly configuration (HiDPI, desktop identity)
 - [x] clang-format, clang-tidy, initial docs and tests
-- [ ] Arrow-key navigation across a folder of images
+- [x] Arrow-key navigation across a folder of images
 
 ## Phase 2 — Interaction & async
 
-- [ ] Mouse-wheel zoom (fit / 100% / free zoom states)
-- [ ] Drag-to-pan
-- [ ] Image-list model built from the opened file's directory
-- [ ] Asynchronous, cancellable decoding off the UI thread
-- [ ] Smooth render updates during rapid navigation
+- [x] Mouse-wheel zoom (fit / 100% / free zoom states)
+- [x] Drag-to-pan
+- [x] Image-list model built from the opened file's directory
+- [x] Asynchronous, cancellable decoding off the UI thread
+- [x] Smooth render updates during rapid navigation
 
 ## Phase 3 — Caching & preloading
 
@@ -51,3 +51,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 | Iteration | Summary                                              |
 | --------- | ---------------------------------------------------- |
 | 1         | Project bootstrap, window, basic image display       |
+| 2         | Zoom/pan, folder navigation, async decoding           |

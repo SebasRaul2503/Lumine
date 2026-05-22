@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QGraphicsView>
+#include <QSize>
 
 class QGraphicsPixmapItem;
 class QGraphicsScene;
@@ -8,41 +9,64 @@ class QImage;
 
 namespace lumine::rendering {
 
-// A GPU-friendly canvas that displays a single image.
-//
-// The image is always scaled to fit the viewport while preserving its aspect
-// ratio, and is re-fitted whenever the widget is resized. Interactive zoom
-// and pan are introduced in Phase 2 — see docs/roadmap.md.
-//
-// ImageView deliberately knows nothing about files, navigation or the rest of
-// the UI: it renders whatever QImage it is handed. This keeps rendering
-// concerns separate from application logic.
+// A GPU-friendly canvas that displays one image with interactive zoom and
+// pan. It renders whatever QImage it is handed and knows nothing about files,
+// navigation or application state — all policy lives in the UI layer.
 class ImageView : public QGraphicsView {
     Q_OBJECT
 
 public:
+    // How the current scale is derived.
+    enum class ZoomMode {
+        Fit,    // scaled to fit the viewport; tracks resizes
+        Actual, // 1:1 with the image's pixels
+        Free,   // an explicit factor chosen with the wheel or keyboard
+    };
+
     explicit ImageView(QWidget* parent = nullptr);
     ~ImageView() override;
 
-    // Displays `image`. Passing a null image clears the canvas.
+    // Displays `image`; a null image clears the canvas. The zoom resets to
+    // Fit so every new image starts framed.
     void setImage(const QImage& image);
-
-    // Removes any displayed image.
     void clear();
 
     [[nodiscard]] bool hasImage() const noexcept;
 
+    // Effective scale as a scene-to-view factor (1.0 == 100%).
+    [[nodiscard]] double zoomFactor() const noexcept;
+    [[nodiscard]] ZoomMode zoomMode() const noexcept;
+
+public slots:
+    void zoomIn();
+    void zoomOut();
+    void zoomToFit();
+    void zoomToActualSize();
+
+signals:
+    // Emitted whenever the effective scale changes.
+    void zoomChanged(double factor);
+
 protected:
     void resizeEvent(QResizeEvent* event) override;
     void showEvent(QShowEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 private:
-    void fitImageToViewport();
+    // Scale that makes the image exactly fit the current viewport.
+    [[nodiscard]] double fitScale() const;
+    void applyScale(double scale);
+    void setZoom(double scale, ZoomMode mode);
+    void refreshDragMode();
 
     // Owned by Qt's parent-child tree: m_scene is parented to this view and
-    // m_pixmapItem is owned by m_scene. They are observed, not owned, here.
+    // m_pixmapItem is owned by m_scene.
     QGraphicsScene* m_scene = nullptr;
     QGraphicsPixmapItem* m_pixmapItem = nullptr;
+    QSize m_imageSize;
+    ZoomMode m_zoomMode = ZoomMode::Fit;
+    double m_scale = 1.0;
 };
 
 } // namespace lumine::rendering

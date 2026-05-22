@@ -1,6 +1,7 @@
 #include "ui/MainWindow.hpp"
 
 #include "core/Logging.hpp"
+#include "image/AsyncImageLoader.hpp"
 #include "image/ImageLoader.hpp"
 #include "rendering/ImageView.hpp"
 
@@ -9,6 +10,7 @@
 #include <QKeySequence>
 #include <QShortcut>
 #include <QStatusBar>
+#include <QtMath>
 
 #include <utility>
 
@@ -25,7 +27,6 @@ constexpr int kStatusTimeoutMs = 5000;
 QString buildImageFilter()
 {
     const QStringList suffixes = image::ImageLoader::supportedSuffixes();
-
     QStringList patterns;
     patterns.reserve(suffixes.size());
     for (const QString& suffix : suffixes) {
@@ -37,10 +38,16 @@ QString buildImageFilter()
 } // namespace
 
 MainWindow::MainWindow(QWidget* parent)
-    : QMainWindow(parent), m_imageView(new rendering::ImageView(this))
+    : QMainWindow(parent), m_imageView(new rendering::ImageView(this)),
+      m_loader(new image::AsyncImageLoader(this))
 {
     buildUi();
     installShortcuts();
+
+    connect(m_loader, &image::AsyncImageLoader::loaded, this, &MainWindow::onImageLoaded);
+    connect(m_loader, &image::AsyncImageLoader::failed, this, &MainWindow::onImageFailed);
+    connect(m_imageView, &rendering::ImageView::zoomChanged, this,
+            &MainWindow::onZoomChanged);
 }
 
 MainWindow::~MainWindow() = default;
@@ -57,7 +64,7 @@ void MainWindow::buildUi()
                                  " border-top: 1px solid #2a2a30; }"
                                  "QStatusBar::item { border: none; }"));
 
-    showStatus(tr("Open an image with Ctrl+O"), 0);
+    showStatus(tr("Open an image with Ctrl+O   ·   ←/→ navigate"), 0);
 }
 
 void MainWindow::installShortcuts()
@@ -80,34 +87,92 @@ void MainWindow::installShortcuts()
             close();
         }
     });
+
+    // Navigation.
+    addShortcut(QKeySequence(Qt::Key_Right), &MainWindow::showNext);
+    addShortcut(QKeySequence(Qt::Key_Space), &MainWindow::showNext);
+    addShortcut(QKeySequence(Qt::Key_Left), &MainWindow::showPrevious);
+
+    // Zoom.
+    addShortcut(QKeySequence::ZoomIn, [this]() { m_imageView->zoomIn(); });
+    addShortcut(QKeySequence(Qt::Key_Plus), [this]() { m_imageView->zoomIn(); });
+    addShortcut(QKeySequence(Qt::Key_Equal), [this]() { m_imageView->zoomIn(); });
+    addShortcut(QKeySequence::ZoomOut, [this]() { m_imageView->zoomOut(); });
+    addShortcut(QKeySequence(Qt::Key_Minus), [this]() { m_imageView->zoomOut(); });
+    addShortcut(QKeySequence(Qt::Key_0), [this]() { m_imageView->zoomToFit(); });
+    addShortcut(QKeySequence(Qt::Key_1), [this]() { m_imageView->zoomToActualSize(); });
 }
 
-bool MainWindow::openImage(const QString& path)
+void MainWindow::openImage(const QString& path)
 {
-    const image::LoadResult result = image::ImageLoader::load(path);
-    if (!result.ok()) {
-        showStatus(result.message, kStatusTimeoutMs);
-        qCWarning(lcApp) << "Failed to open image:" << path;
-        return false;
+    const QFileInfo info(path);
+    if (!info.exists() || !info.isFile()) {
+        showStatus(tr("File not found: %1").arg(path), kStatusTimeoutMs);
+        qCWarning(lcApp) << "openImage: missing file" << path;
+        return;
     }
 
-    m_imageView->setImage(result.image);
-    m_currentPath = path;
+    m_imageList.openFromFile(info.absoluteFilePath());
+    loadCurrent();
+}
 
-    const QString name = QFileInfo(path).fileName();
-    setWindowTitle(QStringLiteral("%1 — Lumine").arg(name));
-    showStatus(QStringLiteral("%1   ·   %2 × %3 px")
-                   .arg(name)
-                   .arg(result.image.width())
-                   .arg(result.image.height()),
+void MainWindow::loadCurrent()
+{
+    const QString path = m_imageList.current();
+    if (path.isEmpty()) {
+        return;
+    }
+    showStatus(tr("Loading %1…").arg(QFileInfo(path).fileName()), 0);
+    m_loader->request(path);
+}
+
+void MainWindow::showNext()
+{
+    if (m_imageList.count() < 2) {
+        return;
+    }
+    m_imageList.next();
+    loadCurrent();
+}
+
+void MainWindow::showPrevious()
+{
+    if (m_imageList.count() < 2) {
+        return;
+    }
+    m_imageList.previous();
+    loadCurrent();
+}
+
+void MainWindow::onImageLoaded(const QString& path, const QImage& image)
+{
+    m_displayedPath = path;
+    m_imageView->setImage(image);
+    updateTitle();
+    showStatus(QStringLiteral("%1   ·   %2 × %3   ·   %4 / %5")
+                   .arg(QFileInfo(path).fileName())
+                   .arg(image.width())
+                   .arg(image.height())
+                   .arg(m_imageList.currentIndex() + 1)
+                   .arg(m_imageList.count()),
                kStatusTimeoutMs);
-    return true;
+}
+
+void MainWindow::onImageFailed(const QString& path, const QString& message)
+{
+    showStatus(message, kStatusTimeoutMs);
+    qCWarning(lcApp) << "Load failed:" << path << message;
+}
+
+void MainWindow::onZoomChanged(double /*factor*/)
+{
+    updateTitle();
 }
 
 void MainWindow::promptForImage()
 {
-    const QString path = QFileDialog::getOpenFileName(this, tr("Open Image"),
-                                                      m_currentPath, buildImageFilter());
+    const QString path = QFileDialog::getOpenFileName(
+        this, tr("Open Image"), m_displayedPath, buildImageFilter());
     if (!path.isEmpty()) {
         openImage(path);
     }
@@ -128,6 +193,17 @@ void MainWindow::toggleFullscreen()
 void MainWindow::showStatus(const QString& message, int timeoutMs)
 {
     statusBar()->showMessage(message, timeoutMs);
+}
+
+void MainWindow::updateTitle()
+{
+    if (m_displayedPath.isEmpty()) {
+        setWindowTitle(QStringLiteral("Lumine"));
+        return;
+    }
+    const QString name = QFileInfo(m_displayedPath).fileName();
+    const int percent = qRound(m_imageView->zoomFactor() * 100.0);
+    setWindowTitle(QStringLiteral("%1  ·  %2%  —  Lumine").arg(name).arg(percent));
 }
 
 } // namespace lumine::ui
