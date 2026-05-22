@@ -3,6 +3,7 @@
 #include "rendering/ZoomMath.hpp"
 
 #include <QColor>
+#include <QEasingCurve>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QImage>
@@ -12,6 +13,7 @@
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QTransform>
+#include <QVariantAnimation>
 #include <QWheelEvent>
 
 #include <algorithm>
@@ -24,10 +26,14 @@ const QColor kCanvasBackground{0x12, 0x12, 0x14};
 
 // Slack above the fit scale before panning is offered, to absorb rounding.
 constexpr double kPanThreshold = 0.001;
+
+// Duration of the fade-in shown when the image changes.
+constexpr int kFadeDurationMs = 130;
 } // namespace
 
 ImageView::ImageView(QWidget* parent)
-    : QGraphicsView(parent), m_scene(new QGraphicsScene(this))
+    : QGraphicsView(parent), m_scene(new QGraphicsScene(this)),
+      m_fadeAnimation(new QVariantAnimation(this))
 {
     setScene(m_scene);
 
@@ -46,6 +52,17 @@ ImageView::ImageView(QWidget* parent)
     setResizeAnchor(QGraphicsView::AnchorViewCenter);
 
     setBackgroundBrush(kCanvasBackground);
+
+    m_fadeAnimation->setDuration(kFadeDurationMs);
+    m_fadeAnimation->setStartValue(0.0);
+    m_fadeAnimation->setEndValue(1.0);
+    m_fadeAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    connect(m_fadeAnimation, &QVariantAnimation::valueChanged, this,
+            [this](const QVariant& value) {
+                if (m_pixmapItem != nullptr) {
+                    m_pixmapItem->setOpacity(value.toDouble());
+                }
+            });
 }
 
 ImageView::~ImageView() = default;
@@ -69,10 +86,12 @@ void ImageView::setImage(const QImage& image)
     m_imageSize = image.size();
     m_scene->setSceneRect(m_pixmapItem->boundingRect());
     zoomToFit();
+    startFadeIn();
 }
 
 void ImageView::clear()
 {
+    m_fadeAnimation->stop();
     m_scene->clear(); // deletes every item, including m_pixmapItem
     m_pixmapItem = nullptr;
     m_imageSize = QSize();
@@ -189,6 +208,16 @@ void ImageView::refreshDragMode()
     // Hand-drag panning is offered only when the image overflows the view.
     const bool pannable = m_pixmapItem != nullptr && m_scale > fitScale() + kPanThreshold;
     setDragMode(pannable ? QGraphicsView::ScrollHandDrag : QGraphicsView::NoDrag);
+}
+
+void ImageView::startFadeIn()
+{
+    if (m_pixmapItem == nullptr) {
+        return;
+    }
+    m_fadeAnimation->stop();
+    m_pixmapItem->setOpacity(0.0);
+    m_fadeAnimation->start();
 }
 
 } // namespace lumine::rendering

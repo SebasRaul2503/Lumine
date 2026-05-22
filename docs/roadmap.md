@@ -34,10 +34,14 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 
 ## Phase 4 — Experience
 
-- [ ] Subtle open / navigation transitions
-- [ ] EXIF metadata panel
-- [ ] Slideshow mode
-- [ ] Recent files
+- [x] Subtle fade transition on image change
+- [x] Image properties panel (file & pixel metadata)
+- [x] Slideshow mode
+- [x] Recent files
+
+> Camera EXIF tag extraction (exposure, ISO, lens) is a future addition —
+> it needs a dedicated parser or a library such as exiv2. The current
+> properties panel covers file facts and decoded-pixel facts.
 
 ## Phase 5 — Performance & packaging
 
@@ -53,3 +57,4 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 | 1         | Project bootstrap, window, basic image display       |
 | 2         | Zoom/pan, folder navigation, async decoding           |
 | 3         | LRU cache, neighbour preloading, thumbnail strip      |
+| 4         | Fade transitions, info panel, slideshow, recent files |

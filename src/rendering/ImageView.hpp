@@ -6,12 +6,13 @@
 class QGraphicsPixmapItem;
 class QGraphicsScene;
 class QImage;
+class QVariantAnimation;
 
 namespace lumine::rendering {
 
-// A GPU-friendly canvas that displays one image with interactive zoom and
-// pan. It renders whatever QImage it is handed and knows nothing about files,
-// navigation or application state — all policy lives in the UI layer.
+// A GPU-friendly canvas that displays one image with interactive zoom, pan
+// and a subtle fade-in when the image changes. It renders whatever QImage it
+// is handed and knows nothing about files, navigation or application state.
 class ImageView : public QGraphicsView {
     Q_OBJECT
 
@@ -27,7 +28,7 @@ public:
     ~ImageView() override;
 
     // Displays `image`; a null image clears the canvas. The zoom resets to
-    // Fit so every new image starts framed.
+    // Fit and the new image fades in.
     void setImage(const QImage& image);
     void clear();
 
@@ -59,11 +60,13 @@ private:
     void applyScale(double scale);
     void setZoom(double scale, ZoomMode mode);
     void refreshDragMode();
+    void startFadeIn();
 
-    // Owned by Qt's parent-child tree: m_scene is parented to this view and
-    // m_pixmapItem is owned by m_scene.
+    // Owned by Qt's parent-child tree: m_scene is parented to this view,
+    // m_pixmapItem is owned by m_scene, m_fadeAnimation is parented here.
     QGraphicsScene* m_scene = nullptr;
     QGraphicsPixmapItem* m_pixmapItem = nullptr;
+    QVariantAnimation* m_fadeAnimation = nullptr;
     QSize m_imageSize;
     ZoomMode m_zoomMode = ZoomMode::Fit;
     double m_scale = 1.0;

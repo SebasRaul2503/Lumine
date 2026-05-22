@@ -24,8 +24,12 @@ add_library(lumine_lib STATIC
     core/ImageCache.hpp
     core/Logging.cpp
     core/Logging.hpp
+    core/RecentFiles.cpp
+    core/RecentFiles.hpp
     image/AsyncImageLoader.cpp
     image/AsyncImageLoader.hpp
+    image/ImageInfo.cpp
+    image/ImageInfo.hpp
     image/ImageList.cpp
     image/ImageList.hpp
     image/ImageLoader.cpp
@@ -37,6 +41,8 @@ add_library(lumine_lib STATIC
     rendering/ImageView.cpp
     rendering/ImageView.hpp
     rendering/ZoomMath.hpp
+    ui/InfoPanel.cpp
+    ui/InfoPanel.hpp
     ui/MainWindow.cpp
     ui/MainWindow.hpp
     ui/ThumbnailStrip.cpp

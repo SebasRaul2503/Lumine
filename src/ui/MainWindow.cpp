@@ -2,16 +2,23 @@
 
 #include "core/Logging.hpp"
 #include "image/AsyncImageLoader.hpp"
+#include "image/ImageInfo.hpp"
 #include "image/ImageLoader.hpp"
 #include "rendering/ImageView.hpp"
+#include "ui/InfoPanel.hpp"
 #include "ui/ThumbnailStrip.hpp"
 
+#include <QAction>
+#include <QCursor>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QHBoxLayout>
 #include <QKeySequence>
+#include <QMenu>
+#include <QSettings>
 #include <QShortcut>
 #include <QStatusBar>
+#include <QTimer>
 #include <QtMath>
 #include <QWidget>
 
@@ -24,6 +31,7 @@ namespace {
 constexpr int kDefaultWidth = 1180;
 constexpr int kDefaultHeight = 760;
 constexpr int kStatusTimeoutMs = 5000;
+constexpr int kSlideshowIntervalMs = 3500;
 
 // Decoded-image cache budget. Generous enough to hold the current image and
 // several neighbours, bounded enough to keep Lumine light.
@@ -46,11 +54,15 @@ QString buildImageFilter()
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), m_imageView(new rendering::ImageView(this)),
-      m_thumbnailStrip(new ThumbnailStrip(this)),
-      m_loader(new image::AsyncImageLoader(this)), m_cache(kCacheBudgetBytes)
+      m_thumbnailStrip(new ThumbnailStrip(this)), m_infoPanel(new InfoPanel(this)),
+      m_loader(new image::AsyncImageLoader(this)), m_slideshowTimer(new QTimer(this)),
+      m_cache(kCacheBudgetBytes)
 {
     buildUi();
     installShortcuts();
+
+    m_slideshowTimer->setInterval(kSlideshowIntervalMs);
+    connect(m_slideshowTimer, &QTimer::timeout, this, &MainWindow::showNext);
 
     connect(m_loader, &image::AsyncImageLoader::loaded, this, &MainWindow::onImageLoaded);
     connect(m_loader, &image::AsyncImageLoader::failed, this, &MainWindow::onImageFailed);
@@ -60,22 +72,27 @@ MainWindow::MainWindow(QWidget* parent)
             &MainWindow::onZoomChanged);
     connect(m_thumbnailStrip, &ThumbnailStrip::imageSelected, this,
             &MainWindow::onThumbnailSelected);
+
+    QSettings settings;
+    m_recentFiles.load(settings);
 }
 
 MainWindow::~MainWindow() = default;
 
 void MainWindow::buildUi()
 {
-    // Central layout: thumbnail strip on the left, image canvas filling the
-    // rest. The strip stays hidden until a multi-image folder is opened.
+    // Central layout: thumbnail strip, image canvas (stretching), info panel.
+    // Both side panels stay hidden until the user reveals them.
     auto* central = new QWidget(this);
     auto* layout = new QHBoxLayout(central);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     layout->addWidget(m_thumbnailStrip);
     layout->addWidget(m_imageView, 1);
+    layout->addWidget(m_infoPanel);
     setCentralWidget(central);
     m_thumbnailStrip->hide();
+    m_infoPanel->hide();
 
     resize(kDefaultWidth, kDefaultHeight);
     setWindowTitle(QStringLiteral("Lumine"));
@@ -85,7 +102,7 @@ void MainWindow::buildUi()
                                  " border-top: 1px solid #2a2a30; }"
                                  "QStatusBar::item { border: none; }"));
 
-    showStatus(tr("Open an image with Ctrl+O   ·   ←/→ navigate   ·   T strip"), 0);
+    showStatus(tr("Ctrl+O open   ·   ←/→ navigate   ·   T strip   ·   I info"), 0);
 }
 
 void MainWindow::installShortcuts()
@@ -97,10 +114,13 @@ void MainWindow::installShortcuts()
     };
 
     addShortcut(QKeySequence::Open, &MainWindow::promptForImage);
+    addShortcut(QKeySequence(Qt::CTRL | Qt::Key_R), &MainWindow::showRecentMenu);
     addShortcut(QKeySequence::Quit, &MainWindow::close);
     addShortcut(QKeySequence(Qt::Key_F11), &MainWindow::toggleFullscreen);
     addShortcut(QKeySequence(Qt::Key_F), &MainWindow::toggleFullscreen);
     addShortcut(QKeySequence(Qt::Key_T), &MainWindow::toggleThumbnails);
+    addShortcut(QKeySequence(Qt::Key_I), &MainWindow::toggleInfoPanel);
+    addShortcut(QKeySequence(Qt::Key_S), &MainWindow::toggleSlideshow);
     addShortcut(QKeySequence(Qt::Key_Escape), [this]() {
         if (isFullScreen()) {
             toggleFullscreen();
@@ -134,10 +154,12 @@ void MainWindow::openImage(const QString& path)
         return;
     }
 
-    m_imageList.openFromFile(info.absoluteFilePath());
+    const QString absolute = info.absoluteFilePath();
+    m_imageList.openFromFile(absolute);
     m_cache.clear(); // a new directory — drop the old neighbourhood
     m_thumbnailStrip->setPaths(m_imageList.paths());
     m_thumbnailStrip->setVisible(m_imageList.count() > 1);
+    rememberRecent(absolute);
     loadCurrent();
 }
 
@@ -164,6 +186,7 @@ void MainWindow::displayImage(const QString& path, const QImage& image)
 {
     m_displayedPath = path;
     m_imageView->setImage(image);
+    m_infoPanel->setProperties(image::ImageInfo::gather(path, image));
     updateTitle();
     showStatus(QStringLiteral("%1   ·   %2 × %3   ·   %4 / %5")
                    .arg(QFileInfo(path).fileName())
@@ -187,6 +210,13 @@ void MainWindow::preloadNeighbours()
     for (const QString& neighbour : unique) {
         m_loader->requestPreload(neighbour);
     }
+}
+
+void MainWindow::rememberRecent(const QString& path)
+{
+    m_recentFiles.add(path);
+    QSettings settings;
+    m_recentFiles.save(settings);
 }
 
 void MainWindow::showNext()
@@ -250,6 +280,36 @@ void MainWindow::promptForImage()
     }
 }
 
+void MainWindow::showRecentMenu()
+{
+    QMenu menu(this);
+    const QStringList recents = m_recentFiles.list();
+
+    if (recents.isEmpty()) {
+        QAction* empty = menu.addAction(tr("No recent files"));
+        empty->setEnabled(false);
+    }
+    else {
+        for (const QString& path : recents) {
+            QAction* entry = menu.addAction(QFileInfo(path).fileName());
+            entry->setData(path);
+            entry->setToolTip(path);
+        }
+        menu.addSeparator();
+        QAction* clearAction = menu.addAction(tr("Clear recent files"));
+        connect(clearAction, &QAction::triggered, this, [this]() {
+            m_recentFiles.clear();
+            QSettings settings;
+            m_recentFiles.save(settings);
+        });
+    }
+
+    const QAction* chosen = menu.exec(QCursor::pos());
+    if (chosen != nullptr && chosen->data().isValid()) {
+        openImage(chosen->data().toString());
+    }
+}
+
 void MainWindow::toggleFullscreen()
 {
     if (isFullScreen()) {
@@ -265,6 +325,26 @@ void MainWindow::toggleFullscreen()
 void MainWindow::toggleThumbnails()
 {
     m_thumbnailStrip->setVisible(!m_thumbnailStrip->isVisible());
+}
+
+void MainWindow::toggleInfoPanel()
+{
+    m_infoPanel->setVisible(!m_infoPanel->isVisible());
+}
+
+void MainWindow::toggleSlideshow()
+{
+    if (m_slideshowTimer->isActive()) {
+        m_slideshowTimer->stop();
+        showStatus(tr("Slideshow stopped"), kStatusTimeoutMs);
+    }
+    else if (m_imageList.count() > 1) {
+        m_slideshowTimer->start();
+        showStatus(tr("Slideshow started — press S to stop"), kStatusTimeoutMs);
+    }
+    else {
+        showStatus(tr("Slideshow needs more than one image"), kStatusTimeoutMs);
+    }
 }
 
 void MainWindow::showStatus(const QString& message, int timeoutMs)

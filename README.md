@@ -19,11 +19,14 @@ Available now:
 - Asynchronous decoding off the UI thread, with stale-result cancellation
 - LRU decoded-image cache with speculative next/previous preloading
 - Thumbnail sidebar for click-to-jump navigation
+- Subtle fade transition when the image changes
+- Image properties panel and a slideshow mode
+- Recent files, reachable from a quick-pick menu
 - Fullscreen mode and a keyboard-first control scheme
 - Dark, minimal interface
 
-Planned: open/navigation transitions, EXIF metadata, slideshow mode,
-recent files, and a GPU-backed viewport.
+Planned: a GPU-backed viewport, progressive loading for very large
+images, performance profiling, and AUR packaging.
 
 ## Quick start
 
@@ -46,11 +49,14 @@ Full instructions are in [`docs/build.md`](docs/build.md).
 | Shortcut          | Action                          |
 | ----------------- | ------------------------------- |
 | `Ctrl+O`          | Open an image                   |
+| `Ctrl+R`          | Recent files menu               |
 | `←` / `→` / `Space` | Previous / next image         |
 | `+` / `-` / wheel | Zoom in / out                   |
 | `0` / `1`         | Zoom to fit / actual size       |
 | Double-click      | Toggle fit and 1:1              |
 | `T`               | Toggle the thumbnail strip      |
+| `I`               | Toggle the properties panel     |
+| `S`               | Start / stop the slideshow      |
 | `F` / `F11`       | Toggle fullscreen               |
 | `Esc`             | Exit fullscreen, or quit        |
 | `Ctrl+Q`          | Quit                            |
