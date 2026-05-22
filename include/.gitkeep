@@ -1,0 +1,5 @@
+# Reserved for public headers.
+#
+# Lumine is currently a single application: each module under src/ keeps its
+# headers beside its sources. If a reusable library is ever extracted from the
+# codebase, its public API headers will live here.

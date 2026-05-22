@@ -1,0 +1,26 @@
+# Lumine C++ formatting rules. Apply with scripts/format.sh.
+---
+Language: Cpp
+Standard: c++20
+BasedOnStyle: LLVM
+ColumnLimit: 90
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4
+NamespaceIndentation: None
+FixNamespaceComments: true
+BreakBeforeBraces: Stroustrup
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: Yes
+PointerAlignment: Left
+ReferenceAlignment: Left
+SpaceAfterCStyleCast: false
+SortIncludes: CaseInsensitive
+IncludeBlocks: Preserve
+Cpp11BracedListStyle: true
+IndentPPDirectives: AfterHash
+EmptyLineBeforeAccessModifier: LogicalBlock
+...

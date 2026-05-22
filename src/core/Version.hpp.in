@@ -1,0 +1,12 @@
+// Generated from src/core/Version.hpp.in by CMake — do not edit by hand.
+#pragma once
+
+namespace lumine::core {
+
+// Project version string, e.g. "0.1.0".
+inline constexpr const char* kVersion = "@PROJECT_VERSION@";
+
+// Human-readable project name.
+inline constexpr const char* kProjectName = "@PROJECT_NAME@";
+
+} // namespace lumine::core

@@ -1,0 +1,5 @@
+# Reserved for vendored third-party code.
+#
+# Lumine currently pulls external dependencies through the system package
+# manager or CMake FetchContent (see tests/CMakeLists.txt). Any source that
+# must be vendored directly into the repository will live here.

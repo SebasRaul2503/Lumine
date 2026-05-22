@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Lumine
+GenericName=Image Viewer
+Comment=A fast, modern image viewer for Wayland
+Exec=lumine %f
+Icon=io.github.lumine.Lumine
+Terminal=false
+Categories=Graphics;Viewer;Qt;
+MimeType=image/png;image/jpeg;image/gif;image/bmp;image/webp;image/tiff;image/x-portable-pixmap;
+StartupNotify=true
+StartupWMClass=io.github.lumine.Lumine

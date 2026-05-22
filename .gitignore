@@ -1,0 +1,19 @@
+# Build directories
+/build/
+/build-*/
+/cmake-build-*/
+/out/
+
+# CMake / tooling artifacts
+/compile_commands.json
+CMakeUserPresets.json
+
+# Editor & IDE
+.cache/
+.vscode/
+.idea/
+*.user
+*.swp
+
+# OS noise
+.DS_Store
