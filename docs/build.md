@@ -6,7 +6,7 @@
 | --------------- | ------------------------------ | ------------------ |
 | C++20 compiler  | GCC ≥ 12 or Clang ≥ 15         | Yes                |
 | CMake ≥ 3.21    | Build system                   | Yes                |
-| Qt 6 (≥ 6.5)    | Core, Gui, Widgets             | Yes                |
+| Qt 6 (≥ 6.5)    | Core, Gui, Widgets, OpenGLWidgets | Yes             |
 | qt6-wayland     | Wayland platform plugin        | Yes (to run on Wayland) |
 | Catch2 v3       | Test framework                 | Tests only \*      |
 | clang-format / clang-tidy | Formatting & linting | Development only   |

@@ -6,8 +6,10 @@
 #include <QEasingCurve>
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
+#include <QGuiApplication>
 #include <QImage>
 #include <QMouseEvent>
+#include <QOpenGLWidget>
 #include <QPainter>
 #include <QPixmap>
 #include <QResizeEvent>
@@ -29,12 +31,26 @@ constexpr double kPanThreshold = 0.001;
 
 // Duration of the fade-in shown when the image changes.
 constexpr int kFadeDurationMs = 130;
+
+// The offscreen and minimal QPA platforms have no usable GL context, so the
+// GPU viewport is enabled only on real display platforms (Wayland, X11).
+bool gpuViewportSupported()
+{
+    const QString platform = QGuiApplication::platformName();
+    return !platform.isEmpty() && platform != QLatin1String("offscreen") &&
+           platform != QLatin1String("minimal");
+}
 } // namespace
 
 ImageView::ImageView(QWidget* parent)
     : QGraphicsView(parent), m_scene(new QGraphicsScene(this)),
       m_fadeAnimation(new QVariantAnimation(this))
 {
+    // Route all compositing through the GPU where a real context exists.
+    if (gpuViewportSupported()) {
+        setViewport(new QOpenGLWidget);
+    }
+
     setScene(m_scene);
 
     // The image is the interface: no frame, no scrollbars.

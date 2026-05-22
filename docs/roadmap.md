@@ -45,10 +45,10 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 
 ## Phase 5 — Performance & packaging
 
-- [ ] GPU texture reuse and an OpenGL/QRhi viewport
-- [ ] Progressive loading for very large images
-- [ ] Performance profiling and startup-time budget
-- [ ] PKGBUILD and AUR-ready packaging
+- [x] GPU-backed OpenGL viewport
+- [x] Bounded decode that caps very large images
+- [x] Performance profiling (scoped timers, startup timing)
+- [x] PKGBUILD and CPack packaging
 
 ## Iteration history
 
@@ -58,3 +58,13 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` planned
 | 2         | Zoom/pan, folder navigation, async decoding           |
 | 3         | LRU cache, neighbour preloading, thumbnail strip      |
 | 4         | Fade transitions, info panel, slideshow, recent files |
+| 5         | GPU viewport, huge-image cap, profiling, packaging    |
+
+## Future directions
+
+Beyond the five-phase plan:
+
+- Tiled / progressive rendering for true gigapixel images
+- Camera EXIF tag extraction (exposure, ISO, lens) via exiv2
+- Basic edits — rotate, crop — with non-destructive save
+- A settings dialog for cache budget, slideshow interval and theme

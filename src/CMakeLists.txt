@@ -26,6 +26,8 @@ add_library(lumine_lib STATIC
     core/Logging.hpp
     core/RecentFiles.cpp
     core/RecentFiles.hpp
+    core/ScopedTimer.cpp
+    core/ScopedTimer.hpp
     image/AsyncImageLoader.cpp
     image/AsyncImageLoader.hpp
     image/ImageInfo.cpp
@@ -62,6 +64,7 @@ target_link_libraries(lumine_lib
         Qt6::Core
         Qt6::Gui
         Qt6::Widgets
+        Qt6::OpenGLWidgets
     PRIVATE
         lumine_warnings)
 

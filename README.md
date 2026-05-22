@@ -22,11 +22,12 @@ Available now:
 - Subtle fade transition when the image changes
 - Image properties panel and a slideshow mode
 - Recent files, reachable from a quick-pick menu
+- GPU-backed OpenGL viewport; very large images decode bounded
 - Fullscreen mode and a keyboard-first control scheme
 - Dark, minimal interface
 
-Planned: a GPU-backed viewport, progressive loading for very large
-images, performance profiling, and AUR packaging.
+See [`docs/roadmap.md`](docs/roadmap.md) for future directions — tiled
+rendering for gigapixel images, EXIF tags, and basic edits.
 
 ## Quick start
 

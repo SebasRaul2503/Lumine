@@ -1,0 +1,44 @@
+# Maintainer: Sebastian Castillo <seracava2503@gmail.com>
+#
+# A VCS package that builds Lumine from the latest commit. Update `url` and
+# the `source` git URL to the real repository before publishing to the AUR,
+# then regenerate .SRCINFO with:  makepkg --printsrcinfo > .SRCINFO
+
+pkgname=lumine-git
+_pkgname=lumine
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="A fast, modern, GPU-accelerated image viewer for Wayland"
+arch=('x86_64')
+url="https://github.com/sebastian/lumine"
+license=('MIT')
+depends=('qt6-base' 'qt6-wayland' 'hicolor-icon-theme')
+makedepends=('cmake' 'ninja' 'git' 'catch2')
+provides=('lumine')
+conflicts=('lumine')
+source=("${_pkgname}::git+https://github.com/sebastian/lumine.git")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/${_pkgname}"
+    # Tagged releases become e.g. 0.2.0.r12.gabc1234; untagged trees fall
+    # back to a commit-count + short-hash version.
+    git describe --long --tags --always 2>/dev/null \
+        | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' \
+        || printf "0.0.0.r%s.g%s" \
+            "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    cmake -S "${_pkgname}" -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DLUMINE_BUILD_TESTS=OFF
+    cmake --build build
+}
+
+package() {
+    DESTDIR="${pkgdir}" cmake --install build
+    install -Dm644 "${_pkgname}/LICENSE" \
+        "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

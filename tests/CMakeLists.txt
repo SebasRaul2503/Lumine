@@ -27,6 +27,7 @@ add_executable(lumine_tests
     test_image_loader.cpp
     test_platform_info.cpp
     test_recent_files.cpp
+    test_scoped_timer.cpp
     test_zoom_math.cpp)
 
 target_link_libraries(lumine_tests

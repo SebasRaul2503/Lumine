@@ -41,7 +41,7 @@ include(LumineWarnings)
 # ---------------------------------------------------------------------------
 # Dependencies
 # ---------------------------------------------------------------------------
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets OpenGLWidgets)
 qt_standard_project_setup()
 
 # ---------------------------------------------------------------------------
@@ -64,3 +64,19 @@ message(STATUS "  Qt version        : ${Qt6_VERSION}")
 message(STATUS "  Build tests       : ${LUMINE_BUILD_TESTS}")
 message(STATUS "  Warnings as errors: ${LUMINE_WARNINGS_AS_ERRORS}")
 message(STATUS "")
+
+# ---------------------------------------------------------------------------
+# Packaging — `cpack` builds a binary tarball, `cpack --config
+# CPackSourceConfig.cmake` a source tarball. See packaging/PKGBUILD for the
+# Arch Linux package.
+# ---------------------------------------------------------------------------
+set(CPACK_PACKAGE_NAME "lumine")
+set(CPACK_PACKAGE_VENDOR "Lumine")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PROJECT_DESCRIPTION}")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/sebastian/lumine")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_GENERATOR "TGZ")
+set(CPACK_SOURCE_GENERATOR "TGZ")
+set(CPACK_SOURCE_IGNORE_FILES "/build/;/\\\\.git/;/\\\\.cache/;\\\\.user$")
+include(CPack)

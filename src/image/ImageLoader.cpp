@@ -1,14 +1,19 @@
 #include "image/ImageLoader.hpp"
 
 #include "core/Logging.hpp"
+#include "core/ScopedTimer.hpp"
 
 #include <QFileInfo>
 #include <QImageReader>
 
+#include <algorithm>
+
 namespace lumine::image {
 
-LoadResult ImageLoader::load(const QString& path)
+LoadResult ImageLoader::load(const QString& path, int maxLongSide)
 {
+    const core::ScopedTimer timer(QStringLiteral("decode %1").arg(path));
+
     LoadResult result;
 
     const QFileInfo info(path);
@@ -27,6 +32,19 @@ LoadResult ImageLoader::load(const QString& path)
         result.message = QStringLiteral("Unsupported or unreadable format: %1").arg(path);
         qCWarning(lcImage) << result.message;
         return result;
+    }
+
+    // Bound the decode of pathologically large images so a single file can
+    // never exhaust memory. Normal photographs are well under the cap.
+    const QSize sourceSize = reader.size();
+    if (maxLongSide > 0 && sourceSize.isValid() && !sourceSize.isEmpty()) {
+        const int longSide = std::max(sourceSize.width(), sourceSize.height());
+        if (longSide > maxLongSide) {
+            reader.setScaledSize(
+                sourceSize.scaled(maxLongSide, maxLongSide, Qt::KeepAspectRatio));
+            qCInfo(lcImage) << "Capping oversized image" << path << sourceSize << "to"
+                            << reader.scaledSize();
+        }
     }
 
     result.image = reader.read();

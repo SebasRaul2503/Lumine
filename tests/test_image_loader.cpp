@@ -149,3 +149,39 @@ TEST_CASE("ImageLoader::loadThumbnail returns null for a missing file",
         QStringLiteral("/no/such/lumine-thumbnail.png"), QSize(64, 64));
     CHECK(thumb.isNull());
 }
+
+TEST_CASE("ImageLoader caps the decode size of an oversized image", "[loader][huge]")
+{
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    QImage source(400, 300, QImage::Format_RGB32);
+    source.fill(Qt::green);
+    const QString path = QDir(tmp.path()).filePath(QStringLiteral("large.png"));
+    REQUIRE(source.save(path, "PNG"));
+
+    // A deliberately tiny cap stands in for the real huge-image threshold.
+    const auto result = ImageLoader::load(path, 100);
+
+    REQUIRE(result.ok());
+    CHECK(result.image.width() <= 100);
+    CHECK(result.image.height() <= 100);
+    // The 4:3 aspect ratio survives the cap: 400x300 becomes 100x75.
+    CHECK(result.image.width() == 100);
+    CHECK(result.image.height() == 75);
+}
+
+TEST_CASE("ImageLoader leaves an image below the cap untouched", "[loader]")
+{
+    QTemporaryDir tmp;
+    REQUIRE(tmp.isValid());
+    QImage source(120, 90, QImage::Format_RGB32);
+    source.fill(Qt::green);
+    const QString path = QDir(tmp.path()).filePath(QStringLiteral("small.png"));
+    REQUIRE(source.save(path, "PNG"));
+
+    const auto result = ImageLoader::load(path, 100000);
+
+    REQUIRE(result.ok());
+    CHECK(result.image.width() == 120);
+    CHECK(result.image.height() == 90);
+}

@@ -62,8 +62,9 @@ file path ──▶ ImageLoader::load ──▶ QImage ──▶ ImageView::setI
 - **`QGraphicsView`** was chosen over a raw `paintEvent` widget because it
   provides scene transforms (scale, translate) for free. Phase 2's zoom and
   pan become transform tweaks rather than manual geometry math.
-- The viewport can later be swapped for a `QOpenGLWidget` to route all
-  compositing through the GPU, without touching application code.
+- The viewport is a `QOpenGLWidget` on real display platforms, so all
+  compositing runs on the GPU; it falls back to a raster viewport on the
+  offscreen / minimal platforms used by the headless test runner.
 - `Qt::SmoothTransformation` and `SmoothPixmapTransform` give bilinear
   scaling so down-scaled images stay clean.
 
@@ -122,6 +123,10 @@ they arrive.
 - No owning raw pointers: Qt objects are held in the parent-child tree
   (a form of RAII — the parent destroys its children), and value types use
   automatic storage.
+- Very large images are decoded down-scaled to a 12000 px bound
+  (`ImageLoader`), so a single pathological file cannot exhaust memory.
+- `core::ScopedTimer` logs scope durations to the `lumine.perf` logging
+  category; enable it with `QT_LOGGING_RULES="lumine.perf=true"`.
 
 ## Wayland considerations
 

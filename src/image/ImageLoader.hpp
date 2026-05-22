@@ -25,15 +25,21 @@ struct LoadResult {
     [[nodiscard]] bool ok() const noexcept { return error == LoadError::None; }
 };
 
-// Stateless, synchronous decoding of a single image file.
-//
-// Iteration 1 decodes on the calling thread. Asynchronous, cancellable
-// loading is introduced in Phase 2 — see docs/roadmap.md.
+// Decoded images are capped to this many pixels on their longer side. The
+// value sits far above any normal photograph, so it only bounds
+// pathologically large images and protects Lumine from exhausting memory.
+inline constexpr int kDefaultMaxLongSide = 12000;
+
+// Stateless, synchronous decoding of a single image file. Stateless and free
+// of UI types so it can be called unchanged from a worker thread.
 class ImageLoader {
 public:
-    // Decodes the image at `path`, honouring EXIF orientation. Never throws;
-    // failures are reported through LoadResult::error.
-    [[nodiscard]] static LoadResult load(const QString& path);
+    // Decodes the image at `path`, honouring EXIF orientation. An image whose
+    // longer side exceeds `maxLongSide` is decoded down-scaled to that bound
+    // (pass a non-positive value to disable the cap). Never throws; failures
+    // are reported through LoadResult::error.
+    [[nodiscard]] static LoadResult load(const QString& path,
+                                         int maxLongSide = kDefaultMaxLongSide);
 
     // Lower-case file suffixes (without a leading dot) that Qt can decode in
     // this build, e.g. {"png", "jpg", "webp"}.

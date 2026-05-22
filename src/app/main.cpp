@@ -5,9 +5,11 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QElapsedTimer>
 #include <QGuiApplication>
 #include <QString>
 #include <QStringList>
+#include <QSurfaceFormat>
 
 namespace {
 
@@ -20,10 +22,18 @@ constexpr auto kDesktopFileName = "io.github.lumine.Lumine";
 
 int main(int argc, char* argv[])
 {
+    QElapsedTimer startupTimer;
+    startupTimer.start();
+
     // Must be set before the QApplication is constructed. PassThrough keeps
     // fractional display scaling (common on Hyprland) instead of rounding it.
     QApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+
+    // Request a vsynced GL surface for the GPU-backed image canvas.
+    QSurfaceFormat surfaceFormat = QSurfaceFormat::defaultFormat();
+    surfaceFormat.setSwapInterval(1);
+    QSurfaceFormat::setDefaultFormat(surfaceFormat);
 
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("Lumine"));
@@ -61,5 +71,7 @@ int main(int argc, char* argv[])
     }
 
     window.show();
+
+    qCInfo(lumine::lcPerf) << "Startup to event loop:" << startupTimer.elapsed() << "ms";
     return QApplication::exec();
 }
